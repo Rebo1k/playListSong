@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">  
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">  
+  <title>Custom Audio Playlist</title>
+  <style>
+    body {
+      background: #111;
+      font-family: sans-serif;
+      color: #fff;
+      display: block;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      overflow-y: auto;
+    }
+    * {
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .navbar {
+      position: fixed;
+      transform: translateX(100vw);
+      padding: 5px;
+      border-radius: 10px;
+      width: 90%;
+      background: #444;
+      display: flex;
+      justify-content: center;
+      gap: 5px;
+      z-index: 10;
+      transition: all .3s ease;
+    }
+    .container {
+      display: flex;
+      justify-content: center;
+    }
+    .arrowLeftFirst {
+      position: relative;
+      left: 0;
+      text-align: center;
+      background: #222;
+      padding: 10px 1vw;
+      border-top-left-radius: 5px;
+      border-bottom-left-radius: 5px;
+      box-shadow: 0 0 4px black;
+      transition: all .3s ease;
+    }
+    .arrowLeftFirst:hover {
+      box-shadow: 0 0 2px black;
+    }
+    .arrowLeftSecond {
+      position: fixed;
+      right: 0;
+      margin-top: 10px;
+      padding: 10px 2vw;
+      background: #222;
+      border: 2px solid #444;
+      border-top-left-radius: 8px;
+      border-bottom-left-radius: 8px;
+      transform: translateX(0);
+      transition: all .3s ease;
+      z-index: 9;
+    }
+    .active {
+      transform: translateX(0);
+    }
+    .unactive {
+      transform: translateX(10vw);
+    }
+    .player {
+      width: 100%;
+      padding: 5px;
+      position: relative;
+      border-radius: 8px;
+      margin-top: 10px;
+      background: #222;
+      cursor: pointer;
+      overflow: visible;
+      word-break: break-word;
+      z-index: 2;
+    }
+    .song-title {
+      font-size: 14px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .time {
+      font-size: 12px;
+      color: #aaa;
+      text-align: right;
+      margin-bottom: -1px;
+    }
+    .progress {
+      width: 100%;
+      height: 4px;
+      background: #444;
+      border-radius: 2px;
+      position: relative;
+    }
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, red, orange, yellow, green, blue, purple, red, orange, yellow);
+      background-size: 400%;
+      animation: rainbowMove 5s linear infinite;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+    .player.playing {
+      background: #333;
+      border: 1px solid grey;
+      z-index: 2;
+    }
+    #shuffleBtn {
+      border: 2px solid #333;
+      border-radius: 8px;
+      text-align: center;
+      padding: 10px 16px;
+      background-color: #222;
+      font-weight: bold;
+      z-index: 4;
+    }
+    #shuffleBtn:active {
+      background-color: #444;
+    }
+    .search {
+      color: white;
+      width: 90vw;
+      padding: 10px;
+      background: transparent;
+      transition: all .3s ease;
+    }
+    .search:focus {
+      outline: 2px solid #4a9fff;
+      outline-offset: -2px;
+      text-shadow: 0 0 1px black;
+      border-radius: 8px;
+    }
+    audio {
+      display: none; /* sembunyiin audio bawaan */
+    }
+     @keyframes rainbowMove {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 100% 50%; }
+    }
+    .overlay {
+      position: fixed;
+      top: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0,0,0,0.5);
+      opacity: 0;
+      visibility: hidden;
+      transition: all .3s ease;
+      z-index: 3;
+    }
+    .opacity {
+      opacity: 1;
+      visibility: visible;
+    }
+    .unopacity {
+      opacity: 0;
+      visibility: hidden;
+    }
+  </style>
+</head>
+<body>
+  <div class="overlay"></div>
+  <div class="container">
+    <div class="arrowLeftSecond"><</div>
+    <div class="navbar">
+      <div class="arrowLeftFirst"><</div>
+      <input id="search" class="search" type="text" placeholder="search...">
+      <div id="shuffleBtn">Random</div>
+    </div>
+  </div>
+  <!-- Player list -->
+  <div class="player" data-src="https://files.catbox.moe/e8yrwy.mp3">
+    <div class="song-title"><song>3.03pm</song> - しゃろう</div>
+    <div class="time">00:00 / 00:00</div>
+    <div class="progress"><div class="progress-bar"></div></div>
+  </div>
+
+  <div class="player" data-src="https://files.catbox.moe/nabjsu.mp3">
+    <div class="song-title"><song>dari aku untuk aku</song> - Chloe pawapua</div>
+    <div class="time">00:00 / 00:00</div>
+    <div class="progress"><div class="progress-bar"></div></div>
+  </div>
+
+  <div class="player" data-src="https://files.catbox.moe/lvgjc3.mp3">
+    <div class="song-title"><song>Jadian yuk</song> - Chloe pawapua</div>
+    <div class="time">00:00 / 00:00</div>
+    <div class="progress"><div class="progress-bar"></div></div>
+  </div>
+  
+  <div class="player" data-src="https://files.catbox.moe/twteg5.mp3">
+    <div class="song-title"><song>Lagu</song> - Chloe pawapua</div>
+    <div class="time">00:00 / 00:00</div>
+    <div class="progress"><div class="progress-bar"></div></div>
+  </div>
+  
+  <div class="player" data-src="https://files.catbox.moe/m37bl3.mp3">
+    <div class="song-title"><song>Mengapai mentari</song> - Aretha kirana</div>
+    <div class="time">00:00 / 00:00</div>
+    <div class="progress"><div class="progress-bar"></div></div>
+  </div>
+  
+  <div class="player" data-src="https://files.catbox.moe/8e5wr3.mp3">
+    <div class="song-title"><song>Jarak</song> - Beaconcream & Aretha kirana</div>
+    <div class="time">00:00 / 00:00</div>
+    <div class="progress"><div class="progress-bar"></div></div>
+  </div>
+  
+  <div class="player" data-src="https://files.catbox.moe/bveles.mp3">
+    <div class="song-title"><song>Gyyuto(cover by momochan sing)</song> - Eleine Celestia</div>
+    <div class="time">00:00 / 00:00</div>
+    <div class="progress"><div class="progress-bar"></div></div>
+  </div>
+  
+  <div class="player" data-src="https://files.catbox.moe/jqw0xz.mp3">
+    <div class="song-title"><song>akhir tak bahagia</song> - missellia</div>
+    <div class="time">00:00 / 00:00</div>
+    <div class="progress"><div class="progress-bar"></div></div>
+  </div>
+  
+  <div class="player" data-src="https://files.catbox.moe/jiejj2.mp3">
+    <div class="song-title"><song>alasanku di sini</song> - amarynn</div>
+    <div class="time">00:00 / 00:00</div>
+    <div class="progress"><div class="progress-bar"></div></div>
+  </div>
+  
+  <div class="player" data-src="https://files.catbox.moe/kjiegf.mp3">
+    <div class="song-title"><song>Fana</song> - amarynn</div>
+    <div class="time">00:00 / 00:00</div>
+    <div class="progress"><div class="progress-bar"></div></div>
+  </div>
+  
+  <div class="player" data-src="https://files.catbox.moe/zgujo7.mp3">
+    <div class="song-title"><song>sempurna</song> - andra & the backbone</div>
+    <div class="time">00:00 / 00:00</div>
+    <div class="progress"><div class="progress-bar"></div></div>
+  </div>
+  
+  <div class="player" data-src="https://files.catbox.moe/frml2j.mp3">
+    <div class="song-title"><song>nanti kita seperti ini</song> - batas senja</div>
+    <div class="time">00:00 / 00:00</div>
+    <div class="progress"><div class="progress-bar"></div></div>
+  </div>
+  
+  <div class="player" data-src="https://files.catbox.moe/le2qo3.mp3">
+    <div class="song-title"><song>beranjak dewasa</song> - nadif amizah</div>
+    <div class="time">00:00 / 00:00</div>
+    <div class="progress"><div class="progress-bar"></div></div>
+  </div>
+  
+  <div class="player" data-src="https://files.catbox.moe/j3g7ss.mp3">
+    <div class="song-title"><song>resah jadi luka</song> - daun jatuh</div>
+    <div class="time">00:00 / 00:00</div>
+    <div class="progress"><div class="progress-bar"></div></div>
+  </div>
+  
+  <div class="player" data-src="https://files.catbox.moe/abks9l.mp3">
+    <div class="song-title"><song>kamu terlalu baik</song> - dimas m</div>
+    <div class="time">00:00 / 00:00</div>
+    <div class="progress"><div class="progress-bar"></div></div>
+  </div>
+  
+  <div class="player" data-src="https://files.catbox.moe/fz15dc.mp3">
+    <div class="song-title"><song>kita ini apa?</song> - dimas m</div>
+    <div class="time">00:00 / 00:00</div>
+    <div class="progress"><div class="progress-bar"></div></div>
+  </div>
+  
+  <div class="player" data-src="https://files.catbox.moe/p5lojt.mp3">
+    <div class="song-title"><song>sekarang hingga nanti kita tua</song> - dimas m</div>
+    <div class="time">00:00 / 00:00</div>
+    <div class="progress"><div class="progress-bar"></div></div>
+  </div>
+  
+  <div class="player" data-src="https://files.catbox.moe/o2xl3p.mp3">
+    <div class="song-title"><song>fana merah jambu</song> - fourtwnty</div>
+    <div class="time">00:00 / 00:00</div>
+    <div class="progress"><div class="progress-bar"></div></div>
+  </div>
+  
+  <div class="player" data-src="https://files.catbox.moe/6jv80a.mp3">
+    <div class="song-title"><song>hitam putih</song> - fourtwnty</div>
+    <div class="time">00:00 / 00:00</div>
+    <div class="progress"><div class="progress-bar"></div></div>
+  </div>
+  
+  <div class="player" data-src="https://files.catbox.moe/qo1f6t.mp3">
+    <div class="song-title"><song>garis terdepan</song> - fiersa besari</div>
+    <div class="time">00:00 / 00:00</div>
+    <div class="progress"><div class="progress-bar"></div></div>
+  </div>
+  
+  <div class="player" data-src="https://files.catbox.moe/0dq8ds.mp3">
+    <div class="song-title"><song>jiwa bersedih</song> - ghea indrawari</div>
+    <div class="time">00:00 / 00:00</div>
+    <div class="progress"><div class="progress-bar"></div></div>
+  </div>
+  
+  <div class="player" data-src="https://files.catbox.moe/on81cr.mp3">
+    <div class="song-title"><song>rumah ke rumah</song> - hindia</div>
+    <div class="time">00:00 / 00:00</div>
+    <div class="progress"><div class="progress-bar"></div></div>
+  </div>
+  
+  <div class="player" data-src="https://files.catbox.moe/wdtemk.mp3">
+    <div class="song-title"><song>terpikat senyummu</song> - idgitaf</div>
+    <div class="time">00:00 / 00:00</div>
+    <div class="progress"><div class="progress-bar"></div></div>
+  </div>
+  
+  <div class="player" data-src="https://files.catbox.moe/kxu2vf.mp3">
+    <div class="song-title"><song>karena su sayang</song> - abil ska 86 feat</div>
+    <div class="time">00:00 / 00:00</div>
+    <div class="progress"><div class="progress-bar"></div></div>
+  </div>
+  
+  <div class="player" data-src="https://files.catbox.moe/uyvprs.mp3">
+    <div class="song-title"><song>kembali pulang</song> - suara kayu</div>
+    <div class="time">00:00 / 00:00</div>
+    <div class="progress"><div class="progress-bar"></div></div>
+  </div>
+  
+  <div class="player" data-src="https://files.catbox.moe/aegqgl.mp3">
+    <div class="song-title"><song>komang</song> - rain laode</div>
+    <div class="time">00:00 / 00:00</div>
+    <div class="progress"><div class="progress-bar"></div></div>
+  </div>
+  
+  <div class="player" data-src="https://files.catbox.moe/2rr06i.mp3">
+    <div class="song-title">L - hal</div>
+    <div class="time">00:00 / 00:00</div>
+    <div class="progress"><div class="progress-bar"></div></div>
+  </div>
+  
+  <div class="player" data-src="https://files.catbox.moe/ijm2w5.mp3">
+    <div class="song-title"><song>mimpi yang sempurna</song></div>
+    <div class="time">00:00 / 00:00</div>
+    <div class="progress"><div class="progress-bar"></div></div>
+  </div>
+  
+  <div class="player" data-src="https://files.catbox.moe/0cnj0k.mp3">
+    <div class="song-title"><song>penjaga hati</song> - nadif basmalah</div>
+    <div class="time">00:00 / 00:00</div>
+    <div class="progress"><div class="progress-bar"></div></div>
+  </div>
+  
+  <div class="player" data-src="https://files.catbox.moe/kls9uy.mp3">
+    <div class="song-title"><song>taruh</song> - nadin amizah</div>
+    <div class="time">00:00 / 00:00</div>
+    <div class="progress"><div class="progress-bar"></div></div>
+  </div>
+  
+  <div class="player" data-src="https://files.catbox.moe/tbsi1z.mp3">
+    <div class="song-title"><song>monolog</song> - pamungkas</div>
+    <div class="time">00:00 / 00:00</div>
+    <div class="progress"><div class="progress-bar"></div></div>
+  </div>
+  
+  <div class="player" data-src="https://files.catbox.moe/ww35jg.mp3">
+    <div class="song-title"><song>laskar pelangi</song> - nidji</div>
+    <div class="time">00:00 / 00:00</div>
+    <div class="progress"><div class="progress-bar"></div></div>
+  </div>
+  
+  <div class="player" data-src="https://files.catbox.moe/7nemek.mp3">
+    <div class="song-title"><song>bagaikan langit</song> - putih abu-abu</div>
+    <div class="time">00:00 / 00:00</div>
+    <div class="progress"><div class="progress-bar"></div></div>
+  </div>
+  
+  <div class="player" data-src="https://files.catbox.moe/3gpdet.mp3">
+    <div class="song-title"><song>blue</song> - young kai</div>
+    <div class="time">00:00 / 00:00</div>
+    <div class="progress"><div class="progress-bar"></div></div>
+  </div>
+  
+  <div class="player" data-src="https://files.catbox.moe/f6fqiv.mp3">
+    <div class="song-title"><song>Teman</song> - Napking</div>
+    <div class="time">00:00 / 00:00</div>
+    <div class="progress"><div class="progress-bar"></div></div>
+  </div>
+  
+  <div class="player" data-src="https://files.catbox.moe/x3dyh3.mp3">
+    <div class="song-title"><song>Dialog Hujan(cover by Hanin Dhiya)</song> - Rufi</div>
+    <div class="time">00:00 / 00:00</div>
+    <div class="progress"><div class="progress-bar"></div></div>
+  </div>
+
+  <!-- Satu audio saja -->
+  <audio id="audio" preload="none"></audio>
+
+<script>
+const audio = document.getElementById("audio");
+const players = document.querySelectorAll(".player");
+const shuffleBtn = document.getElementById("shuffleBtn");
+const search = document.getElementById("search");
+const song = document.querySelectorAll("song");
+const arrowLeftFirst = document.querySelector('.arrowLeftFirst');
+const arrowLeftSecond = document.querySelector('.arrowLeftSecond');
+const navbar = document.querySelector('.navbar');
+const overlay = document.querySelector('.overlay');
+
+function formatTime(sec) {
+  if (isNaN(sec)) return "00:00";
+  let m = Math.floor(sec / 60);
+  let s = Math.floor(sec % 60);
+  return String(m).padStart(2,"0") + ":" + String(s).padStart(2,"0");
+}
+
+let currentPlayer = null;
+
+// Klik div player
+players.forEach((player) => {
+  const timeEl = player.querySelector(".time");
+  const progressBar = player.querySelector(".progress-bar");
+  const src = player.dataset.src;
+
+  player.addEventListener("click", () => {
+    // Kalau klik player yg sama → toggle play/pause
+    if (currentPlayer === player) {
+      if (audio.paused) {
+        audio.play();
+        player.classList.add("playing");
+      } else {
+        audio.pause();
+        player.classList.remove("playing");
+      }
+      return;
+    }
+
+    // Reset semua player lain
+    players.forEach(p => {
+      p.classList.remove("playing");
+      p.querySelector(".progress-bar").style.width = "0%";
+      p.querySelector(".time").textContent = "00:00 / 00:00";
+    });
+
+    // Set audio baru
+    audio.src = src;
+    audio.play();
+    currentPlayer = player;
+    player.classList.add("playing");
+
+    // Update durasi saat metadata siap
+    audio.onloadedmetadata = () => {
+      timeEl.textContent = `00:00 / ${formatTime(audio.duration)}`;
+    };
+  });
+});
+
+// Update progress
+audio.addEventListener("timeupdate", () => {
+  if (!currentPlayer) return;
+  const timeEl = currentPlayer.querySelector(".time");
+  const progressBar = currentPlayer.querySelector(".progress-bar");
+  const percent = (audio.currentTime / audio.duration) * 100;
+  progressBar.style.width = percent + "%";
+  timeEl.textContent = `${formatTime(audio.currentTime)} / ${formatTime(audio.duration)}`;
+});
+
+// Auto next random saat lagu selesai
+audio.addEventListener("ended", () => {
+  if (!currentPlayer) return;
+  const otherPlayers = Array.from(players).filter(p => p !== currentPlayer);
+
+  if (otherPlayers.length > 0) {
+    const randomPlayer = otherPlayers[Math.floor(Math.random() * otherPlayers.length)];
+    randomPlayer.click(); // play random
+  } else {
+    currentPlayer.classList.remove("playing");
+    currentPlayer = null;
+  }
+});
+
+// Tombol manual "Putar Lagu Random"
+shuffleBtn.addEventListener("click", () => {
+  if (players.length === 0) return;
+  let randomPlayer;
+  do {
+    randomPlayer = players[Math.floor(Math.random() * players.length)];
+  } while (randomPlayer === currentPlayer && !audio.paused);
+  randomPlayer.click();
+});
+
+
+search.addEventListener('input', () => {
+  const value = search.value.toLowerCase();
+  
+  players.forEach(k => {
+    let text = k.textContent.toLowerCase();
+    
+    if (text.includes(value)) {
+        k.style.display = 'block';
+      } else {
+        k.style.display = 'none';
+      }
+  });
+});
+
+arrowLeftFirst.addEventListener('click', () => {
+    navbar.classList.toggle('active'),
+    overlay.classList.toggle('opacity'),
+    arrowLeftSecond.classList.remove('unactive')
+  
+    if (arrowLeftFirst.textContent === '<') {
+      arrowLeftFirst.textContent = '>'
+     } else {
+      arrowLeftFirst.textContent = '<'
+    }
+  });
+  
+arrowLeftSecond.addEventListener('click', s => {
+  navbar.classList.add('active'),
+  overlay.classList.add('opacity'),
+  s.target.classList.add('unactive')
+  arrowLeftFirst.textContent = '>';
+});
+
+overlay.addEventListener('click', o => {
+  navbar.classList.remove('active'),
+  o.target.classList.remove('opacity'),
+  arrowLeftSecond.classList.remove('unactive')
+  arrowLeftFirst.textContent = '<';
+});
+</script>
+</body>
+</html>
